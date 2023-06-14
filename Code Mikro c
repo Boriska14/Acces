@@ -1,0 +1,255 @@
+// connexions du module Keypad
+char keypadPort at PORTC;
+
+
+// connexions du module LCD
+sbit LCD_RS at RB1_bit;
+sbit LCD_EN at RB0_bit;
+sbit LCD_D4 at RB4_bit;
+sbit LCD_D5 at RB5_bit;
+sbit LCD_D6 at RB6_bit;
+sbit LCD_D7 at RB7_bit;
+sbit LCD_RS_Direction at TRISB1_bit;
+sbit LCD_EN_Direction at TRISB0_bit;
+sbit LCD_D4_Direction at TRISB4_bit;
+sbit LCD_D5_Direction at TRISB5_bit;
+sbit LCD_D6_Direction at TRISB6_bit;
+sbit LCD_D7_Direction at TRISB7_bit;
+sbit IR_LED at RD0_bit;
+sbit LED1 at RB3_bit;
+sbit LED2 at RB2_bit;
+
+unsigned char filename[]= "temp.TXT";
+int counter;
+unsigned char error;
+unsigned int new=0;
+unsigned int i;
+int j;
+unsigned int adc_value;
+unsigned int taille;
+ char keyPressed;
+unsigned long ADRead;
+unsigned int vDisp[3];
+unsigned int Display[7];
+unsigned int table[7];
+unsigned int sky[7];
+unsigned char blue[4];
+unsigned char test[5];
+ unsigned char liste[4][4]={{'1','2','3','4'},{'2','1','0','5'},{'1','1','1','1'},{'0','6','0','2'}};
+
+
+
+
+unsigned char ones,tens,hundreds;
+unsigned char ones1,tens1;
+int t=0;
+int stoploop;
+
+
+
+unsigned int a;
+unsigned short kp = 0;
+
+double pression, Vin, Vout;
+unsigned char strPressure[23];
+
+
+void eclair(){                           //cette fonction marche correctement
+
+
+// IR_LED = 1; // Allumer la LED infrarouge
+
+        if (IR_LED == 1) { // Vérifier si la LED infrarouge est éteinte
+            LED1 = 1; // Allumer la LED 1
+            LED2 = 1; // Allumer la LED 2
+        }else{
+              LED1=LED2=0;
+        }
+
+}
+
+
+void temp(){
+
+     Lcd_Out(2, 1, "Temp:");
+     //Display = "+125 'C";
+     Display[4] = 39; //'
+     Display[5]= 'C';
+     ADCON1 = 0x0E;
+     ADC_Init();
+
+           ADRead = (ADC_Get_Sample(0) * 500) >> 10;
+           vDisp[0] = ADRead / 100;
+           vDisp[1] = (ADRead / 10) % 10;
+           vDisp[2] = ADRead % 10;
+           Display[1] = vDisp[0] + 48;
+           Display[2] = vDisp[1] + 48;
+           Display[3] = vDisp[2] + 48;
+           LCD_Chr(2, 8, Display[0]);
+           LCD_Chr(2, 9, Display[1]);
+           LCD_Chr(2, 10, Display[2]);
+           LCD_Chr(2, 11, Display[3]);
+           LCD_Chr(2, 12, Display[4]);
+           LCD_Chr(2, 13, Display[5]);
+           //LCD_Out(1, 8, ); // 'Show temperature
+
+           table[1]=Display[1];
+            table[2]='2';
+            table[3]='1';
+            table[4]=Display[4];
+              table[5]=Display[5];
+
+                 sky[1]=Display[1];
+            sky[2]='1';
+            sky[3]='5';
+            sky[4]=Display[4];
+              sky[5]=Display[5];
+
+
+         for(i=0;i<7;i++){
+         if (table[i] != Display[i]){
+         PORTD.F5==1;
+         break;
+         }
+         }
+
+
+}
+
+pressure(){
+        unsigned int Radc, PreI;
+        float Pre;
+        char Text[16];
+
+      //LCD initiation.
+//        Lcd_Init();
+        //Clearing the cursor.
+//        Lcd_Cmd(_LCD_CURSOR_OFF);
+        //Printing text
+        Lcd_Out( 1, 1, "Pres:");
+
+                //Reading ADC channel 0.
+                Radc = ADC_Read(0);
+                //Using the equation
+                Pre = 0.10861*Radc+10,5555;
+                //Forces the result to the integer part.
+                PreI = Pre;
+                //Converts the integer to a string.
+                IntToStr( PreI, Text );
+                //prints the result.
+         Lcd_Out( 1, 6, Text);
+                 Lcd_Out( 1, 14, "kpa");
+                //Delay 100 m seconds.
+
+
+}
+void matrix()
+{   counter=0;
+    a=9;
+   Lcd_Init();
+
+        //Clearing the cursor.
+        Lcd_Cmd(_LCD_CURSOR_OFF);
+        //Printing text
+         Lcd_Cmd(_LCD_CLEAR);
+         Lcd_Out(1, 1, "Key :"); // écrire un message dans Lcd
+while(counter<4){
+
+        kp = 0; // Reset la variable
+         a=a+1;
+        // attendre que le bouton soit pressé et relâch
+         do
+        kp = Keypad_Key_Click(); // sauvegarder le code
+        while (!kp);
+        // transformation du code en valeur ASCII
+        switch (kp)
+        {
+          case 1: kp = 49; break; // 1
+          case 2: kp = 50; break; // 2
+          case 3: kp = 51; break; // 3
+          //case 4: kp = 65; break; // A
+          case 5: kp = 52; break; // 4
+          case 6: kp = 53; break; // 5
+          case 7: kp = 54; break; // 6
+          //case 8: kp = 66; break; // B
+          case 9: kp = 55; break; // 7
+          case 10: kp = 56; break; // 8
+          case 11: kp = 57; break; // 9
+          //case 12: kp = 67; break; // C
+          case 13: kp = 42; break; // *
+          case 14: kp = 48; break; // 0
+          case 15: kp = 35; break; // #
+          //case 16: kp = 68; break; // D
+        }
+        
+        blue[counter] = kp;
+        Lcd_Chr(1, a, kp); // affichage de la valeur ASCII sur LCD
+        counter++;
+    }
+
+// exemple d'utilisation de la fonction addToList() et de la comparaison de la liste avec la liste de listes
+for (i = 0; i < 4; i++) // parcourt chaque liste dans la liste de listes
+{
+    int match = 1; // initialise le drapeau de correspondance à 1
+
+    for (j = 0; j < 4&& liste[i][j] != '\0'; j++) // parcourt chaque élément de la liste de listes
+    {
+        if (j >= 4 || liste[i][j] != blue[j]) // compare chaque élément de la liste avec la liste de caractères
+        {
+            match = 0; // définir le drapeau de correspondance à 0 si les listes ne correspondent pas
+            break; // sortir de la boucle si les listes ne correspondent pas
+        }
+    }
+
+    if (match) // vérifie si les listes correspondent
+    {   Lcd_Cmd(_LCD_CLEAR); // effacement de l’écran
+      Lcd_Cmd(_LCD_CURSOR_OFF); // Cursor off
+       Lcd_Out(1, 1, "code valide"); // écrire un message dans Lcd
+        // les listes correspondent
+        // bloc de code à exécuter si les listes correspondent
+    }
+
+}
+Delay_ms(1000);
+}
+
+
+
+
+
+
+void main()
+{    //LCD initiation.
+        Lcd_Init();
+        //Clearing the cursor.
+        Lcd_Cmd(_LCD_CURSOR_OFF);
+        //Printing text
+         Lcd_Cmd(_LCD_CLEAR);
+         Keypad_Init(); // Initialisation du Keypad
+          TRISD.f0 = 1; // Configurer la broche RB0 en entrée pour la LED infrarouge
+    TRISB.f3 = 0; // Configurer la broche RB1 en sortie pour la LED 1
+    TRISB.f2 = 0; // Configurer la broche RB2 en sortie pour la LED 2
+    PORTA = 0;
+     TRISA = 0X01;
+     PORTB = 0;
+     TRISB = 0;
+     PORTD.F6=0;
+    PORTD.F7=0;
+    PORTD.F5=1;
+    taille=0;
+     PORTD.f2=0;
+   while(1){
+            stoploop=0;
+     while(!stoploop){
+       pressure();
+       temp();
+       eclair();
+       
+       keyPressed = Keypad_Key_Click();
+       if(keyPressed){
+       stoploop=1;
+       }
+     }
+     matrix();
+     }
+}
